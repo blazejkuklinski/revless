@@ -1,0 +1,78 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@custom-variant h-xs (@media (height >= 22rem));
+@custom-variant h-sm (@media (height >= 40rem));
+@custom-variant h-md (@media (height >= 48rem));
+@custom-variant h-lg (@media (height >= 64rem));
+@custom-variant h-xl (@media (height >= 80rem));
+@custom-variant h-2xl (@media (height >= 96rem));
+
+@theme {
+	--font-sans: "DM Sans", sans-serif;
+	--font-display: "Manrope", sans-serif;
+	--radius: 0.125rem;
+	--field-radius: 0.125rem;
+}
+
+.radio__control,
+.radio__indicator::before,
+.slider__thumb,
+.slider__thumb::after,
+.slider__track,
+.switch__control,
+.switch__thumb {
+	@apply rounded-full;
+}
+
+.toast,
+.dropdown__popover {
+	@apply border;
+}
+
+.button-group .button--secondary {
+	font-weight: bold;
+}
+
+.field {
+	@apply grid gap-4 grid-cols-1 lg:grid-cols-2 items-start;
+
+	> :last-child {
+		@apply justify-self-end;
+	}
+}
+
+.title {
+	@apply font-display text-2xl font-bold tracking-tight;
+}
+
+:is(.overflow-y-shadow, .overflow-y-indicator) {
+	container-type: scroll-state;
+	&::after {
+		@apply pointer-events-none sticky bottom-0 block shrink-0 opacity-0 content-[''];
+		@container scroll-state(scrollable: bottom) {
+			opacity: var(--scroll-effect-opacity, 1);
+		}
+	}
+}
+
+.overflow-y-shadow::after {
+	@apply -mt-8 h-8 bg-linear-to-b from-transparent to-overlay;
+}
+
+.overflow-y-indicator {
+	@apply overflow-y-auto;
+	&::after {
+		--scroll-effect-opacity: 0.5;
+		@apply hidden col-span-full mx-auto -mt-3 size-3 bg-foreground;
+		mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / contain
+			no-repeat;
+		@container scroll-state(scrollable: bottom) {
+			@apply block;
+			@media (prefers-reduced-motion: no-preference) {
+				@apply animate-bounce;
+			}
+		}
+	}
+}

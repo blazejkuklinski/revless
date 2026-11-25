@@ -1,0 +1,24 @@
+{
+	"editor.defaultFormatter": "esbenp.prettier-vscode",
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+	"editor.formatOnSave": true,
+	"editor.formatOnSaveMode": "file",
+	"editor.detectIndentation": false,
+	"editor.codeActionsOnSave": {
+		"source.organizeImports": "explicit"
+	},
+	"workbench.tree.indent": 18,
+	"js/ts.referencesCodeLens.enabled": true,
+	"js/ts.referencesCodeLens.showOnAllFunctions": true,
+	"explorer.fileNesting.enabled": true,
+	"explorer.fileNesting.patterns": {
+		"tsconfig.json": "tsconfig.*.json, env.d.ts, typed-router.d.ts",
+		"vite.config.*": "jsconfig*, vitest.config.*, cypress.config.*, playwright.config.*",
+		"package.json": "package-lock.json, pnpm*, .yarnrc*, yarn*, *.MD, .eslint*, eslint*, .oxlint*, oxlint*, .oxfmt*, .prettier*, prettier*, .editorconfig, nest-cli.json, nginx.conf, .gitignore",
+		"Dockerfile": ".dockerignore,docker-compose.yml,nginx-static.conf"
+	},
+	"files.associations": {
+		"*.css": "tailwindcss"
+	}
+}
