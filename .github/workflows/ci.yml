@@ -1,0 +1,74 @@
+name: Revless CI and release
+
+on:
+    pull_request:
+        branches: [main]
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        outputs:
+            release_tag: ${{ steps.version.outputs.release_tag }}
+        steps:
+            - uses: actions/checkout@v7
+              with:
+                  fetch-depth: ${{ github.event_name == 'push' && '0' || '1' }}
+            - uses: actions/setup-node@v7
+              with:
+                  node-version: "24"
+                  cache: npm
+            - name: Check for a version bump
+              id: version
+              if: github.event_name == 'push'
+              env:
+                  BEFORE_SHA: ${{ github.event.before }}
+              run: |
+                  version=$(node -p 'require("./package.json").version')
+                  previous_version=""
+                  if [[ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]]; then
+                      previous_version=$(git show "${BEFORE_SHA}:package.json" | node -p 'JSON.parse(require("node:fs").readFileSync(0, "utf8")).version')
+                  fi
+                  if [[ "$version" != "$previous_version" ]]; then
+                      echo "release_tag=v$version" >> "$GITHUB_OUTPUT"
+                  fi
+            - run: npm ci
+            - run: npm run build
+            - name: Save production build
+              if: github.event_name == 'push'
+              uses: actions/upload-artifact@v4
+              with:
+                  name: revless-dist
+                  path: dist/
+                  include-hidden-files: true
+                  if-no-files-found: error
+
+    release:
+        if: github.event_name == 'push' && needs.build.outputs.release_tag != ''
+        needs: build
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+        steps:
+            - uses: actions/download-artifact@v4
+              with:
+                  name: revless-dist
+                  path: dist
+            - name: Create GitHub Release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  GH_REPO: ${{ github.repository }}
+                  RELEASE_TAG: ${{ needs.build.outputs.release_tag }}
+              run: |
+                  tag="$RELEASE_TAG"
+                  if gh release view "$tag" >/dev/null 2>&1; then
+                    exit 0
+                  fi
+                  (cd dist && zip -qr "../revless-${tag}.zip" .)
+                  gh release create "$tag" "revless-${tag}.zip" \
+                    --target "$GITHUB_SHA" --generate-notes

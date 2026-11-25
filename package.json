@@ -7,8 +7,9 @@
 		"dev": "vite --host 0.0.0.0",
 		"dev:https": "vite --host 0.0.0.0 --strictPort --mode local-https",
 		"build": "tsc -b && vite build",
-		"typecheck": "tsc --noEmit",
-		"update": "node scripts/update-dependencies.js"
+		"type-check": "tsc --noEmit",
+		"deps-update": "node scripts/update-dependencies.js",
+		"version-patch": "npm version patch --no-git-tag-version"
 	},
 	"dependencies": {
 		"@heroui/react": "^3.2.8",
