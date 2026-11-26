@@ -129,7 +129,7 @@ export function MiniMap(props: MiniMap) {
 
 		const canvas = instance.getCanvas()
 		//canvas.style.borderRadius = "25%"
-		canvas.style.maskImage = ["linear-gradient(to right, transparent, black 25%, black 75%, transparent)", "linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)"].join(", ")
+		canvas.style.maskImage = "linear-gradient(to right, transparent, black 25%, black 75%, transparent), linear-gradient(to bottom, transparent, black 25%, black 75%, transparent)"
 		canvas.style.maskComposite = "intersect"
 
 		const updateSize = () => {
@@ -182,7 +182,7 @@ export function MiniMap(props: MiniMap) {
 		<section aria-label="Current location map" className="absolute inset-0 overflow-hidden">
 			{hasPosition ? (
 				<>
-					<div className={`absolute inset-0 ${props.dark ? "opacity-90" : "opacity-80"}`}>
+					<div className={`absolute inset-0 ${props.dark ? "opacity-95" : "opacity-80"}`}>
 						<div ref={container} className="size-full" />
 					</div>
 					<div className="pointer-events-none absolute left-1/2 top-3/4 -translate-x-1/2 -translate-y-1/2">

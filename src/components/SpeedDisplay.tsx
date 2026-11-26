@@ -41,7 +41,7 @@ export function SpeedDisplay(props: SpeedDisplay) {
 	const direction = bearing === null ? null : compassDirections[Math.round(bearing / 45) % compassDirections.length]
 
 	return (
-		<Card className="min-h-0 min-w-0 flex-1 flex-col p-4 gap-2 lg:gap-6 grid landscape:grid-cols-2 landscape:lg:grid-cols-1 portrait:grid-cols-1 grid-rows-[minmax(0,1fr)] ">
+		<Card className="min-h-0 min-w-0 flex-1 flex-col p-4 gap-4 lg:gap-6 grid grid-cols-2 lg:grid-cols-1 portrait:grid-cols-1 grid-rows-[minmax(0,1fr)] ">
 			<div ref={mapArea} className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
 				<MiniMap position={props.position} status={props.gpsStatus} dark={props.dark} showStreetNames={props.showStreetNames} showPointsOfInterest={props.showPointsOfInterest} onBearingChange={updateNorth} />
 
@@ -65,22 +65,22 @@ export function SpeedDisplay(props: SpeedDisplay) {
 					)}
 				</div>
 
-				<div className="pointer-events-none absolute inset-x-0 top-1/3 -translate-y-1/2 flex-col items-center flex landscape:max-[50rem]:hidden">
-					<div className="font-display text-4xl landscape:lg:text-7xl leading-none font-semibold tracking-tight">
+				<div className="pointer-events-none absolute inset-x-0 top-1/3 -translate-y-1/2 flex-col items-center flex landscape:h-sm:hidden landscape:h-md:flex">
+					<div className="font-display text-3xl h-sm:text-7xl leading-none font-semibold tracking-tight">
 						<CountUp end={Math.round(toDisplaySpeed(props.speed, props.unit))} duration={0.4} preserveValue />
 					</div>
 					<div className="landscape:lg:text-xl text-muted">{speedUnitLabel(props.unit)}</div>
 				</div>
 			</div>
 
-			<div className="flex min-w-0 shrink-0 flex-col gap-4 h-lg:lg:gap-6 justify-end overflow-auto">
-				<div className="flex-1 flex-col items-center justify-center hidden landscape:max-[50rem]:flex">
+			<div className="flex min-w-0 shrink-0 flex-col gap-4 lg:lg:gap-6 justify-end overflow-auto">
+				<div className="flex-1 flex-col items-center justify-center hidden landscape:h-sm:flex landscape:h-md:hidden">
 					<div className="font-display text-7xl leading-none font-semibold tracking-tight">
 						<CountUp end={Math.round(toDisplaySpeed(props.speed, props.unit))} duration={0.4} preserveValue />
 					</div>
 					<div className="text-xl text-muted">{speedUnitLabel(props.unit)}</div>
 				</div>
-				<Separator className="shrink-0 " />
+				<Separator className="shrink-0 hidden h-sm:block" />
 				<EngineTelemetry gear={props.gear} rpm={props.rpm} idling={props.idling} maxRpm={props.maxRpm} redZoneRpm={props.redZoneRpm} />
 				<TripSummary trip={props.trip} unit={props.unit} />
 			</div>

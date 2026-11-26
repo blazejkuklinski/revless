@@ -7,7 +7,7 @@ type FieldRootProps = {
 } & PropsWithChildren
 
 function FieldRoot(props: FieldRootProps) {
-	return <div className={clsx("grid grid-cols-1 lg:grid-cols-2 gap-4", props.className)}>{props.children}</div>
+	return <div className={clsx("grid grid-cols-1 @lg:grid-cols-2 gap-2 @lg:gap-4", props.className)}>{props.children}</div>
 }
 
 type FieldControlProps = {
@@ -15,7 +15,7 @@ type FieldControlProps = {
 } & PropsWithChildren
 
 function FieldControl(props: FieldControlProps) {
-	return <div className={clsx("shrink-0 flex lg:justify-end", props.className)}>{props.children}</div>
+	return <div className={clsx("shrink-0 flex gap-4 @lg:justify-end", props.className)}>{props.children}</div>
 }
 
 export default Object.assign(FieldRoot, {

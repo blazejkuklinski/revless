@@ -1,6 +1,6 @@
 import { Button, ButtonGroup, Dropdown, Separator } from "@heroui/react"
 import clsx from "clsx"
-import { ChevronDown, CircleGauge, Info, MapPin, Power, SlidersHorizontal, Timer, Wrench } from "lucide-react"
+import { ChevronDown, CircleGauge, Info, Power, SlidersHorizontal, Timer, Toolbox, Wrench } from "lucide-react"
 
 type Header = {
 	rightHandDrive: boolean
@@ -26,26 +26,26 @@ export function Header(props: Header) {
 					<Dropdown.Popover placement="bottom end">
 						<Dropdown.Menu aria-label="More driving controls">
 							{props.manual && (
-								<Dropdown.Item id="manual-speed" onAction={props.onToggleManualSpeed}>
+								<Dropdown.Item id="manual-speed" onAction={props.onToggleManualSpeed} className="p-3">
 									<Wrench size={15} />
 									Manual speed controls
 								</Dropdown.Item>
 							)}
-							<Dropdown.Item id="settings" onAction={props.onOpenSettings}>
+							<Dropdown.Item id="settings" onAction={props.onOpenSettings} className="p-3">
 								<SlidersHorizontal size={15} />
 								Settings
 							</Dropdown.Item>
-							<Dropdown.Item id="performance" onAction={props.onOpenPerformance}>
+							<Dropdown.Item id="performance" onAction={props.onOpenPerformance} className="p-3">
 								<Timer size={15} />
 								Performance report
 							</Dropdown.Item>
-							<Dropdown.Item id="gps" onAction={props.onOpenGps}>
-								<MapPin size={15} />
-								GPS
+							<Dropdown.Item id="gps" onAction={props.onOpenGps} className="p-3">
+								<Toolbox size={15} />
+								Diagnostics
 							</Dropdown.Item>
 							<Separator />
 
-							<Dropdown.Item id="about" onAction={props.onOpenAbout}>
+							<Dropdown.Item id="about" onAction={props.onOpenAbout} className="p-3">
 								<Info size={15} />
 								About
 							</Dropdown.Item>

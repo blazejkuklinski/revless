@@ -1,3 +1,3 @@
 {
-	"recommendations": ["humao.rest-client", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "bradlc.vscode-tailwindcss", "vscode-icons-team.vscode-icons"]
+	"recommendations": ["humao.rest-client", "dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "bradlc.vscode-tailwindcss", "vscode-icons-team.vscode-icons", "github.vscode-github-actions"]
 }

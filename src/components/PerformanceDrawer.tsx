@@ -39,7 +39,7 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 			variant="blur"
 		>
 			<Drawer.Content placement={props.placement}>
-				<Drawer.Dialog aria-labelledby="performance-title" className="w-full max-w-250">
+				<Drawer.Dialog aria-labelledby="performance-title" className="w-full max-w-200">
 					<Drawer.Header className="flex flex-row items-center justify-between gap-4 pb-6">
 						<Drawer.Heading id="performance-title" className="title">
 							Performance
@@ -71,7 +71,7 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 							</Card>
 						) : (
 							<>
-								<ButtonGroup fullWidth aria-label="Choose a performance test">
+								<ButtonGroup fullWidth aria-label="Choose a performance test" size="lg">
 									<Button variant={mode === "speed" ? "secondary" : "tertiary"} aria-pressed={mode === "speed"} onPress={() => setMode("speed")}>
 										0-{speedUnit == "metric" ? "100 km/h" : "62mph"}
 									</Button>
@@ -87,9 +87,9 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 							</>
 						)}
 					</Drawer.Body>
-					<Drawer.Footer className="shrink-0 flex-wrap gap-4">
+					<Drawer.Footer className="gap-4 flex-nowrap justify-end">
 						{inProgress ? (
-							<Button variant="secondary" onPress={props.onCancel}>
+							<Button variant="secondary" onPress={props.onCancel} size="lg">
 								Cancel run
 							</Button>
 						) : (
@@ -103,6 +103,7 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 									</Checkbox.Content>
 								</Checkbox>
 								<Button
+									size="lg"
 									variant="primary"
 									isDisabled={!canStart}
 									onPress={() => {
