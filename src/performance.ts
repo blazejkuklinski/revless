@@ -3,6 +3,13 @@ import type { SpeedUnit } from "./speed"
 
 export type PerformanceMode = "speed" | "distance"
 
+export type PerformanceSample = {
+	elapsedMs: number
+	speed: number
+	distanceMetres: number
+	altitudeMetres: number | null
+}
+
 export type PerformanceRun = {
 	mode: PerformanceMode
 	unit: SpeedUnit
@@ -18,6 +25,7 @@ export type PerformanceRun = {
 	finishSpeed: number | null
 	slopePercent: number | null
 	reason: string | null
+	samples: PerformanceSample[]
 }
 
 export function createPerformanceRun(mode: PerformanceMode, unit: SpeedUnit, manual: boolean, now: number, altitudeMetres: number | null = null): PerformanceRun {
@@ -35,12 +43,23 @@ export function createPerformanceRun(mode: PerformanceMode, unit: SpeedUnit, man
 		elapsedMs: 0,
 		finishSpeed: null,
 		slopePercent: null,
-		reason: null
+		reason: null,
+		samples: []
 	}
 }
 
 export function invalidatePerformanceRun(run: PerformanceRun, reason: string): PerformanceRun {
 	return { ...run, phase: "invalid", reason }
+}
+
+export function estimateDistanceCrossing(distanceMetres: number, durationSeconds: number, startKmh: number, endKmh: number) {
+	const startMps = startKmh / 3.6
+	const acceleration = (endKmh / 3.6 - startMps) / durationSeconds
+	const crossingMps = Math.sqrt(Math.max(0, startMps ** 2 + 2 * acceleration * distanceMetres))
+	return {
+		seconds: Math.min(durationSeconds, (2 * distanceMetres) / (startMps + crossingMps)),
+		speed: crossingMps * 3.6
+	}
 }
 
 // Speed samples are km/h; time is in milliseconds. No rollout is subtracted.
@@ -77,14 +96,22 @@ export function recordPerformanceSample(run: PerformanceRun, time: number, speed
 			distanceMetres = run.distanceMetres + ((previousMps + finishSpeed / 3.6) / 2) * crossingSeconds
 		}
 	} else if (run.mode === "distance" && distanceMetres >= quarterMileMetres) {
-		const remaining = quarterMileMetres - run.distanceMetres
-		const acceleration = (currentMps - previousMps) / seconds
-		const finishMps = Math.sqrt(Math.max(0, previousMps ** 2 + 2 * acceleration * remaining))
-		const crossingSeconds = Math.min(seconds, (2 * remaining) / (previousMps + finishMps))
+		const crossing = estimateDistanceCrossing(quarterMileMetres - run.distanceMetres, seconds, run.lastSpeed, run.manual ? run.lastSpeed : speed)
 
-		elapsedMs = previousTime - startedAt + crossingSeconds * 1000
+		elapsedMs = previousTime - startedAt + crossing.seconds * 1000
 		distanceMetres = quarterMileMetres
-		finishSpeed = finishMps * 3.6
+		finishSpeed = crossing.speed
+	}
+
+	const previousSamples = run.phase === "armed" && !run.manual
+		? [{ elapsedMs: 0, speed: 0, distanceMetres: 0, altitudeMetres: startAltitudeMetres }]
+		: run.samples
+	let altitudeAtCrossing = sampleAltitudeMetres
+	// Use the elevation at the target crossing, which can be before the final GPS fix.
+	if (sampleAltitudeMetres !== null && distanceMetres < sampledDistanceMetres) {
+		const previousAltitude = run.lastAltitudeMetres
+		const fraction = (distanceMetres - run.distanceMetres) / sampleDistanceMetres
+		altitudeAtCrossing = previousAltitude === null ? null : previousAltitude + (sampleAltitudeMetres - previousAltitude) * fraction
 	}
 
 	const next = {
@@ -96,18 +123,17 @@ export function recordPerformanceSample(run: PerformanceRun, time: number, speed
 		lastAltitudeMetres: sampleAltitudeMetres,
 		distanceMetres,
 		elapsedMs,
-		finishSpeed
+		finishSpeed,
+		samples: [...previousSamples, {
+			elapsedMs,
+			speed: finishSpeed ?? speed,
+			distanceMetres,
+			altitudeMetres: altitudeAtCrossing
+		}]
 	}
 
 	if (finishSpeed !== null) {
-		let finishAltitudeMetres = sampleAltitudeMetres
-		// Use the elevation at the target crossing, which can be before the final GPS fix.
-		if (finishAltitudeMetres !== null && distanceMetres < sampledDistanceMetres) {
-			const previousAltitudeMetres = run.lastAltitudeMetres
-			const fraction = (distanceMetres - run.distanceMetres) / sampleDistanceMetres
-			finishAltitudeMetres = previousAltitudeMetres === null ? null : previousAltitudeMetres + (finishAltitudeMetres - previousAltitudeMetres) * fraction
-		}
-		const slopePercent = startAltitudeMetres !== null && finishAltitudeMetres !== null && distanceMetres > 0 ? ((finishAltitudeMetres - startAltitudeMetres) / distanceMetres) * 100 : null
+		const slopePercent = startAltitudeMetres !== null && altitudeAtCrossing !== null && distanceMetres > 0 ? ((altitudeAtCrossing - startAltitudeMetres) / distanceMetres) * 100 : null
 
 		return { ...next, phase: "complete", slopePercent }
 	}

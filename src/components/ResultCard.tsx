@@ -1,33 +1,32 @@
 import { Button, Card } from "@heroui/react"
-import { Crown, RotateCcw } from "lucide-react"
+import clsx from "clsx"
+import { ChevronRight, Crown, RotateCcw } from "lucide-react"
 import { ReactNode } from "react"
-import { distanceUnitLabel, speedUnitLabel, toDisplayDistance, toDisplaySpeed } from "../speed"
 import { PerformanceResult } from "../stores/performanceResultsStore"
 import { SystemMessage } from "./SystemMessage"
 
 type ResultCardProps = {
 	icon?: ReactNode
-	title: ReactNode
+	best?: boolean
 	result?: PerformanceResult | null
 	onReset?: () => void
-	resetLabel?: string
-	record?: boolean | null
-	className?: string
+	record?: boolean
+	onOpen: () => void
 }
 
 export default function ResultCard(props: ResultCardProps) {
-	const slopePercent = props.result?.slopePercent
-
+	const title = props.best ? "Best result" : "Last result"
+	const resetLabel = props.best ? "Reset best result" : "Reset last result"
 	return (
-		<Card variant="secondary" className={props.className}>
+		<Card variant="secondary" className={clsx("border-l-5 ", props.best ? "border-amber-500" : "border-accent")}>
 			<Card.Header>
 				<Card.Title className="flex flex-wrap items-center justify-between gap-4 h-8">
 					<div className="flex items-center gap-2">
 						{props.icon}
-						{props.title}
+						{title}
 					</div>
 					{props.onReset && (
-						<Button size="sm" variant="ghost" isIconOnly isDisabled={!props.result} aria-label={props.resetLabel ?? "Reset result"} onPress={props.onReset}>
+						<Button className="relative z-10" size="sm" variant="ghost" isIconOnly isDisabled={!props.result} aria-label={resetLabel} onPress={props.onReset}>
 							<RotateCcw />
 						</Button>
 					)}
@@ -35,29 +34,23 @@ export default function ResultCard(props: ResultCardProps) {
 			</Card.Header>
 			<Card.Content className="flex flex-col justify-center">
 				{props.result ? (
-					<div className="space-y-2">
-						<div className="flex gap-1 items-end">
-							<span className="font-display text-3xl font-semibold">{(props.result.elapsedMs / 1000).toFixed(2)}</span>
-							<span className="text-sm text-muted">sec</span>
-							{props.record && <Crown size={15} className="text-success self-center flex-1 justify-center animate-bounce" />}
+					<button type="button" className="cursor-pointer" onClick={props.onOpen}>
+						<div className="flex gap-2 justify-between items-center">
+							<div className="flex items-end gap-4">
+								<div>
+									<span className="font-display text-3xl font-semibold tabular-nums">{(props.result.elapsedMs / 1000).toFixed(2)}</span>
+									<span className="text-sm text-muted"> sec</span>
+								</div>
+								{props.record && (
+									<span className="self-center text-success" title="Personal record">
+										<Crown size={20} aria-hidden="true" className="motion-safe:animate-ping" />
+									</span>
+								)}
+							</div>
+
+							<ChevronRight aria-hidden="true" size={18} />
 						</div>
-						<dl className="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-							<div>
-								<dt className="text-muted">Finish speed</dt>
-								<dd>{props.result.finishSpeed === null ? "—" : `${Math.round(toDisplaySpeed(props.result.finishSpeed, props.result.unit))} ${speedUnitLabel(props.result.unit)}`}</dd>
-							</div>
-							<div>
-								<dt className="text-muted">Distance</dt>
-								<dd>
-									{toDisplayDistance(props.result.distanceMetres / 1000, props.result.unit).toFixed(3)} {distanceUnitLabel(props.result.unit)}
-								</dd>
-							</div>
-							<div>
-								<dt className="text-muted">Avg. slope</dt>
-								<dd>{slopePercent == null ? "—" : `${slopePercent > 0 ? "+" : ""}${slopePercent.toFixed(1)}%`}</dd>
-							</div>
-						</dl>
-					</div>
+					</button>
 				) : (
 					<SystemMessage color="warning" variant="soft">
 						No result yet
