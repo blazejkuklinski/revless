@@ -1,4 +1,5 @@
 import { Button, Card, Chip, Modal, Separator, Surface } from "@heroui/react"
+import clsx from "clsx"
 import { Engine, Flag, X } from "lucide-react"
 import { useMemo, useState } from "react"
 import { Brush, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
@@ -23,13 +24,16 @@ export default function PerformanceReportModal({ result, mode, title, onClose }:
 	const data = useMemo(() => getPerformanceChartData(result), [result])
 	const splits = useMemo(() => getPerformanceSplits(result, mode), [result, mode])
 	const [selection, setSelection] = useState({ startIndex: 0, endIndex: data.length - 1 })
+	const [hiddenSeries, setHiddenSeries] = useState<Partial<Record<string, boolean>>>({})
 	const { startIndex, endIndex } = selection
 	const isZoomed = startIndex > 0 || endIndex < data.length - 1
+
 	const series = [
-		{ key: "speed", label: "Speed", unit: speedUnit, color: "#38bdf8" },
-		{ key: "elevation", label: "Elevation change", unit: heightUnit, color: "#2dd4bf" },
-		{ key: "acceleration", label: "Acceleration", unit: "g", color: "#fbbf24" }
+		{ key: "speed", label: "Speed", unit: speedUnit, color: "var(--accent)" },
+		{ key: "elevation", label: "Elevation change", unit: heightUnit, color: "var(--danger)" },
+		{ key: "acceleration", label: "Acceleration", unit: "g", color: "var(--warning)" }
 	] as const
+
 	const availableSeries = series.filter(({ key }) => data.some((point) => point[key] !== null))
 	const axisWidth = 36
 	const formatSpeed = (speed: number | null) => (speed === null ? "—" : `${toDisplaySpeed(speed, result.unit).toFixed(1)} ${speedUnit}`)
@@ -101,10 +105,19 @@ export default function PerformanceReportModal({ result, mode, title, onClose }:
 
 										<Card.Content className="space-y-4">
 											<ul className="flex flex-wrap gap-x-4 gap-y-2">
-												{availableSeries.map(({ key, label, unit, color }) => (
-													<li key={key} className="flex items-center gap-2">
-														<span aria-hidden="true" className="h-1 w-3 rounded-full" style={{ backgroundColor: color }} />
-														{label} ({unit})
+												{series.map(({ key, label, unit, color }) => (
+													<li key={key}>
+														<Button
+															type="button"
+															aria-pressed={!hiddenSeries[key] && availableSeries.some((item) => item.key === key)}
+															isDisabled={!availableSeries.some((item) => item.key === key)}
+															onPress={() => setHiddenSeries((current) => ({ ...current, [key]: !current[key] }))}
+															variant="ghost"
+															className={clsx(hiddenSeries[key] && "opacity-50")}
+														>
+															<span aria-hidden="true" className="h-1 w-3 rounded-full" style={{ backgroundColor: hiddenSeries[key] ? "var(--muted)" : color }} />
+															{label} ({unit})
+														</Button>
 													</li>
 												))}
 											</ul>
@@ -129,6 +142,7 @@ export default function PerformanceReportModal({ result, mode, title, onClose }:
 																key={key}
 																yAxisId={key}
 																orientation={key === "speed" ? "left" : "right"}
+																includeHidden
 																width={axisWidth}
 																padding={{ top: 10, bottom: 10 }}
 																tickCount={5}
@@ -149,6 +163,7 @@ export default function PerformanceReportModal({ result, mode, title, onClose }:
 																key={key}
 																yAxisId={key}
 																dataKey={key}
+																hide={hiddenSeries[key]}
 																name={label}
 																unit={` ${unit}`}
 																type="monotoneX"
