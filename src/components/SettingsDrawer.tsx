@@ -29,7 +29,7 @@ function MaxSpeedInput(props: MaxSpeedInput) {
 		} else setDraft(String(Math.round(toDisplaySpeed(props.value, props.unit))))
 	}
 	return (
-		<InputGroup variant="secondary" role="presentation" fullWidth className="max-w-50">
+		<InputGroup variant="secondary" role="presentation" className="w-full @lg:max-w-50">
 			<InputGroup.Input
 				aria-label={`Maximum speed in ${speedUnitLabel(props.unit)}`}
 				type="number"
@@ -62,7 +62,7 @@ function RpmInput(props: RpmInput) {
 		} else setDraft(String(props.value))
 	}
 	return (
-		<InputGroup variant="secondary" fullWidth className="max-w-50">
+		<InputGroup variant="secondary" className="w-full @lg:max-w-50">
 			<InputGroup.Input
 				aria-label={props.label}
 				type="number"
@@ -77,6 +77,24 @@ function RpmInput(props: RpmInput) {
 				}}
 			/>
 			<InputGroup.Suffix aria-hidden="true">RPM</InputGroup.Suffix>
+		</InputGroup>
+	)
+}
+
+type GearsProps = {
+	value: number
+	min: number
+	max: number
+	onChange: (gear: number) => void
+}
+
+function GearsInput(props: GearsProps) {
+	return (
+		<InputGroup variant="secondary" className="w-full @lg:max-w-50">
+			<InputGroup.Input aria-label="Number of gears" type="number" min={props.min} max={props.max} value={props.value} onChange={(event) => props.onChange(Number(event.target.value))} />
+			<InputGroup.Suffix>
+				<Engine />
+			</InputGroup.Suffix>
 		</InputGroup>
 	)
 }
@@ -101,7 +119,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 			variant="blur"
 		>
 			<Drawer.Content placement={props.placement}>
-				<Drawer.Dialog aria-labelledby="settings-title" className="w-full max-w-250">
+				<Drawer.Dialog aria-labelledby="settings-title" className="w-full max-w-200">
 					<Drawer.Header className="flex flex-row items-center justify-between gap-4">
 						<Drawer.Heading id="settings-title" className="title">
 							Settings
@@ -110,7 +128,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 							<X size={20} />
 						</Button>
 					</Drawer.Header>
-					<Drawer.Body className="overflow-y-indicator pr-4">
+					<Drawer.Body className="overflow-y-shadow pr-4">
 						<Tabs defaultSelectedKey="sound">
 							<Tabs.ListContainer>
 								<Tabs.List aria-label="Settings categories" className="w-full">
@@ -200,12 +218,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 											<Field>
 												<Field.Label label="Gears" description="Number of forward gears" />
 												<Field.Control>
-													<InputGroup variant="secondary" fullWidth className="max-w-50">
-														<InputGroup.Input aria-label="Number of gears" type="number" min="1" max="12" value={gears} onChange={(event) => setGears(Number(event.target.value))} />
-														<InputGroup.Suffix>
-															<Engine />
-														</InputGroup.Suffix>
-													</InputGroup>
+													<GearsInput value={gears} min={4} max={12} onChange={setGears} />
 												</Field.Control>
 											</Field>
 
@@ -345,11 +358,13 @@ export function SettingsDrawer(props: SettingsDrawer) {
 							</Tabs.Panel>
 						</Tabs>
 					</Drawer.Body>
-					<Drawer.Footer className="justify-end pt-5">
-						<Button variant="secondary" onPress={resetSettings}>
+					<Drawer.Footer className="justify-end">
+						<Button variant="secondary" onPress={resetSettings} size="lg">
 							Reset settings
 						</Button>
-						<Button onPress={props.onClose}>Done</Button>
+						<Button onPress={props.onClose} size="lg">
+							Done
+						</Button>
 					</Drawer.Footer>
 				</Drawer.Dialog>
 			</Drawer.Content>

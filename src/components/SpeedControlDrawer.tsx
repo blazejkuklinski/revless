@@ -1,7 +1,8 @@
 import { Button, Card, Drawer, InputGroup, Slider } from "@heroui/react"
 import { Gauge, X } from "lucide-react"
 import { speedUnitLabel, toDisplaySpeed, toKmh, type SpeedUnit } from "../speed"
-import FieldLabel from "./FieldLabel"
+import Field from "./Field"
+import Fieldset from "./Fieldset"
 import { SystemMessage } from "./SystemMessage"
 
 type ManualSpeedControl = {
@@ -29,7 +30,7 @@ export function SpeedControlDrawer(props: ManualSpeedControl) {
 			isDismissable={false}
 		>
 			<Drawer.Content placement="left">
-				<Drawer.Dialog aria-labelledby="manual-speed-title" className="w-full max-w-150">
+				<Drawer.Dialog aria-labelledby="manual-speed-title" className="w-full max-w-200">
 					<Drawer.Header className="flex flex-row items-center justify-between gap-2">
 						<Drawer.Heading id="manual-speed-title" className="title">
 							Speed control
@@ -48,32 +49,47 @@ export function SpeedControlDrawer(props: ManualSpeedControl) {
 							</Card.Header>
 							<Card.Content className="p-4 space-y-6">
 								<SystemMessage>Simulate a GPS speed while developing locally.</SystemMessage>
-								<fieldset>
-									<FieldLabel label="Current speed" className="self-center" />
-									<InputGroup variant="secondary">
-										<InputGroup.Input aria-label={`Manual speed in ${label}`} className="min-w-0 text-right" type="number" min={0} max={max} step={1} value={displaySpeed} onChange={(event) => change(Number(event.target.value))} />
-										<InputGroup.Suffix>{label}</InputGroup.Suffix>
-									</InputGroup>
-									<div className="col-span-2 space-y-2">
-										<Slider aria-label={`Adjust manual speed in ${label}`} minValue={0} maxValue={max} step={1} value={displaySpeed} onChange={(value) => change(Array.isArray(value) ? value[0] : value)}>
-											<Slider.Track>
-												<Slider.Fill />
-												<Slider.Thumb />
-											</Slider.Track>
-										</Slider>
-										<div className="flex justify-between text-muted text-xs">
-											<span>0 {label}</span>
-											<span>
-												{max} {label}
-											</span>
-										</div>
-									</div>
-								</fieldset>
+								<Fieldset>
+									<Field>
+										<Field.Label label="Current speed" className="self-center" />
+										<Field.Control className="col-span-full flex-col items-end">
+											<InputGroup variant="secondary" className="w-40">
+												<InputGroup.Input
+													aria-label={`Manual speed in ${label}`}
+													className="min-w-0 text-right"
+													type="number"
+													min={0}
+													max={max}
+													step={1}
+													value={displaySpeed}
+													onChange={(event) => change(Number(event.target.value))}
+												/>
+												<InputGroup.Suffix>{label}</InputGroup.Suffix>
+											</InputGroup>
+											<div className="space-y-2 w-full">
+												<Slider aria-label={`Adjust manual speed in ${label}`} minValue={0} maxValue={max} step={1} value={displaySpeed} onChange={(value) => change(Array.isArray(value) ? value[0] : value)}>
+													<Slider.Track>
+														<Slider.Fill />
+														<Slider.Thumb />
+													</Slider.Track>
+												</Slider>
+												<div className="flex justify-between text-muted text-xs">
+													<span>0 {label}</span>
+													<span>
+														{max} {label}
+													</span>
+												</div>
+											</div>
+										</Field.Control>
+									</Field>
+								</Fieldset>
 							</Card.Content>
 						</Card>
 					</Drawer.Body>
-					<Drawer.Footer className="justify-end pt-5">
-						<Button onPress={props.onClose}>Done</Button>
+					<Drawer.Footer className="justify-end">
+						<Button onPress={props.onClose} size="lg">
+							Done
+						</Button>
 					</Drawer.Footer>
 				</Drawer.Dialog>
 			</Drawer.Content>

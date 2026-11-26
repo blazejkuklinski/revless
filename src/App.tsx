@@ -2,8 +2,8 @@ import { Toast } from "@heroui/react"
 import clsx from "clsx"
 import { useEffect, useState } from "react"
 import { AboutModal } from "./components/AboutModal"
+import { DiagnosticDrawer } from "./components/DiagnosticDrawer"
 import { Footer } from "./components/Footer"
-import { GpsDrawer } from "./components/GpsDrawer"
 import { Header } from "./components/Header"
 import { PerformanceDrawer } from "./components/PerformanceDrawer"
 import { PerformanceStatusToast } from "./components/PerformanceStatusToast"
@@ -142,7 +142,7 @@ function App() {
 			{performanceRun.measuring && <PerformanceStatusToast startedAt={performanceRun.run?.startedAt ?? null} onOpen={controls.openPerformance} />}
 
 			<SettingsDrawer open={controls.settingsOpen} placement={drawerPlacement} onClose={controls.closeSettings} />
-			<GpsDrawer open={controls.gpsOpen} placement={drawerPlacement} position={drive.position} message={drive.message} onClose={controls.closeGps} />
+			<DiagnosticDrawer open={controls.gpsOpen} placement={drawerPlacement} position={drive.position} message={drive.message} onClose={controls.closeGps} />
 			<AboutModal open={controls.aboutOpen} onClose={controls.closeAbout} />
 			<PerformanceDrawer
 				open={controls.performanceOpen}
