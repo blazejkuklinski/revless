@@ -2,7 +2,8 @@ import { create } from "zustand"
 import { performanceResultsStorageKey } from "../parameters"
 import type { PerformanceMode, PerformanceRun } from "../performance"
 
-export type PerformanceResult = Pick<PerformanceRun, "elapsedMs" | "finishSpeed" | "distanceMetres" | "unit"> & { slopePercent?: number | null }
+export type PerformanceResult = Pick<PerformanceRun, "elapsedMs" | "finishSpeed" | "distanceMetres" | "unit"> &
+	Partial<Pick<PerformanceRun, "slopePercent" | "samples" | "manual">>
 
 type ModeResults = {
 	last: PerformanceResult | null
@@ -27,9 +28,9 @@ function loadResults(): PerformanceResults {
 
 export const usePerformanceResultsStore = create<PerformanceResultsStore>((set) => ({
 	results: loadResults(),
-	recordResult: ({ phase, mode, elapsedMs, finishSpeed, distanceMetres, unit, slopePercent }) => {
+	recordResult: ({ phase, mode, elapsedMs, finishSpeed, distanceMetres, unit, slopePercent, samples, manual }) => {
 		if (phase !== "complete") return
-		const last = { elapsedMs, finishSpeed, distanceMetres, unit, slopePercent }
+		const last = { elapsedMs, finishSpeed, distanceMetres, unit, slopePercent, samples, manual }
 		set(({ results }) => {
 			const best = results[mode]?.best
 			return { results: { ...results, [mode]: { last, best: best && best.elapsedMs <= elapsedMs ? best : last } } }

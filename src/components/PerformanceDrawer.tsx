@@ -1,11 +1,13 @@
 import { Button, ButtonGroup, Card, Checkbox, Drawer, Label } from "@heroui/react"
 import { Flag, Info, Trophy, X } from "lucide-react"
-import { useState } from "react"
+import { lazy, Suspense, useState } from "react"
 import type { PerformanceMode, PerformanceRun } from "../performance"
 import { usePerformanceResultsStore } from "../stores/performanceResultsStore"
 import { useSettingsStore } from "../stores/settingsStore"
 import ResultCard from "./ResultCard"
 import { SystemMessage } from "./SystemMessage"
+
+const PerformanceReportModal = lazy(() => import("./PerformanceReportModal"))
 
 type PerformanceDrawer = {
 	open: boolean
@@ -22,18 +24,24 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 	const { run } = props
 	const [mode, setMode] = useState<PerformanceMode>("speed")
 	const [safetyConfirmed, setSafetyConfirmed] = useState(false)
+	const [reportSlot, setReportSlot] = useState<"last" | "best" | null>(null)
 	const results = usePerformanceResultsStore((state) => state.results[mode])
+	const isRecord = !!results?.last && results.last.elapsedMs === results.best?.elapsedMs
+	const reportResult = reportSlot ? results?.[reportSlot] : null
 	const resetResult = usePerformanceResultsStore((state) => state.resetResult)
 	const inProgress = run?.phase === "armed" || run?.phase === "running"
 	const canStart = safetyConfirmed && props.armBlockedMessage === null
-	const isRecord = !!results?.last && !!results.best && results.last.elapsedMs === results.best.elapsedMs
 	const { speedUnit } = useSettingsStore((t) => t.settings)
+	const closeDrawer = () => {
+		setReportSlot(null)
+		props.onClose()
+	}
 
 	return (
 		<Drawer.Backdrop
 			isOpen={props.open}
 			onOpenChange={(isOpen) => {
-				if (!isOpen) props.onClose()
+				if (!isOpen) closeDrawer()
 			}}
 			isDismissable
 			variant="blur"
@@ -44,7 +52,7 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 						<Drawer.Heading id="performance-title" className="title">
 							Performance
 						</Drawer.Heading>
-						<Button isIconOnly variant="ghost" onPress={props.onClose} aria-label="Close performance report">
+						<Button isIconOnly variant="ghost" onPress={closeDrawer} aria-label="Close performance drawer">
 							<X size={20} />
 						</Button>
 					</Drawer.Header>
@@ -81,8 +89,8 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 								</ButtonGroup>
 
 								<div className="grid gap-3 md:grid-cols-2">
-									<ResultCard icon={<Flag size={15} />} title="Last result" result={results?.last} resetLabel="Reset last result" onReset={() => resetResult(mode, "last")} record={isRecord} className="ring-accent hover:ring" />
-									<ResultCard icon={<Trophy size={15} />} title="Best result" result={results?.best} resetLabel="Reset best result" onReset={() => resetResult(mode, "best")} className="ring-amber-500 hover:ring" />
+									<ResultCard icon={<Flag size={15} />} result={results?.last} record={isRecord} onReset={() => resetResult(mode, "last")} onOpen={() => setReportSlot("last")} />
+									<ResultCard icon={<Trophy size={15} />} best result={results?.best} onReset={() => resetResult(mode, "best")} onOpen={() => setReportSlot("best")} />
 								</div>
 							</>
 						)}
@@ -114,6 +122,11 @@ export function PerformanceDrawer(props: PerformanceDrawer) {
 							</>
 						)}
 					</Drawer.Footer>
+					{props.open && reportResult && (
+						<Suspense fallback={null}>
+							<PerformanceReportModal result={reportResult} mode={mode} title={reportSlot === "last" ? "Last result" : "Best result"} onClose={() => setReportSlot(null)} />
+						</Suspense>
+					)}
 				</Drawer.Dialog>
 			</Drawer.Content>
 		</Drawer.Backdrop>

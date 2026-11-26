@@ -8,7 +8,7 @@
 		"dev:https": "vite --host 0.0.0.0 --strictPort --mode local-https",
 		"build": "tsc -b && vite build",
 		"type-check": "tsc --noEmit",
-		"deps-update": "node scripts/update-dependencies.js",
+		"deps-update": "ncu -u && npm install",
 		"version-patch": "npm version patch --no-git-tag-version"
 	},
 	"dependencies": {
@@ -21,6 +21,7 @@
 		"react": "^19.3.1",
 		"react-countup": "^6.5.3",
 		"react-dom": "^19.3.1",
+		"recharts": "^3.11.1",
 		"tailwindcss": "^4.3.5",
 		"zustand": "^5.1.0"
 	},

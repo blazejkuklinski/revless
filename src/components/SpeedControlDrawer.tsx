@@ -41,7 +41,7 @@ export function SpeedControlDrawer(props: ManualSpeedControl) {
 					<Drawer.Body className="space-y-6">
 						<Card variant="transparent">
 							<Card.Header>
-								<Card.Title className="flex items-center gap-2 text-sm font-bold">
+								<Card.Title className="flex items-center gap-2">
 									<Gauge />
 									Speed
 								</Card.Title>

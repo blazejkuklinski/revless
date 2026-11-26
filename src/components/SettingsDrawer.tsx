@@ -10,9 +10,6 @@ import { AccentColorPicker } from "./AccentColorPicker"
 import Field from "./Field"
 import Fieldset from "./Fieldset"
 
-// Aligns each section icon with its title.
-const titleClass = "flex items-center gap-2 text-sm font-bold"
-
 type MaxSpeedInput = {
 	value: number
 	minSpeed: number
@@ -136,7 +133,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 							<Tabs.Panel id="sound">
 								<Card variant="transparent">
 									<Card.Header>
-										<Card.Title className="flex items-center gap-2 text-sm font-bold">
+										<Card.Title className="flex items-center gap-2">
 											<Volume2 />
 											Sound
 										</Card.Title>
@@ -193,7 +190,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 							<Tabs.Panel id="gears">
 								<Card variant="transparent">
 									<Card.Header>
-										<Card.Title className={titleClass}>
+										<Card.Title className="flex items-center gap-2">
 											<Cog />
 											Transmission
 										</Card.Title>
@@ -253,7 +250,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 							<Tabs.Panel id="appearance" className="space-y-6">
 								<Card variant="transparent">
 									<Card.Header>
-										<Card.Title className="flex items-center gap-2 text-sm font-bold">
+										<Card.Title className="flex items-center gap-2">
 											<Sun />
 											Appearance
 										</Card.Title>
@@ -310,7 +307,7 @@ export function SettingsDrawer(props: SettingsDrawer) {
 
 								<Card variant="transparent">
 									<Card.Header>
-										<Card.Title className="flex items-center gap-2 text-sm font-bold">
+										<Card.Title className="flex items-center gap-2">
 											<Map />
 											Map
 										</Card.Title>
