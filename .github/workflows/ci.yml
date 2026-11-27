@@ -72,3 +72,83 @@ jobs:
                   (cd dist && zip -qr "../revless-${tag}.zip" .)
                   gh release create "$tag" "revless-${tag}.zip" \
                     --target "$GITHUB_SHA" --generate-notes
+
+    deploy:
+        name: Deploy to OVH
+        if: github.event_name == 'push' && vars.OVH_SFTP_PATH != ''
+        needs: build
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        concurrency:
+            group: revless-ovh
+            cancel-in-progress: false
+        steps:
+            - name: Check whether this is the current main build
+              id: current
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
+                  if [[ "$head" == "$GITHUB_SHA" ]]; then
+                      echo "deploy=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "Skipping deployment because main has advanced."
+                  fi
+            - if: steps.current.outputs.deploy == 'true'
+              uses: actions/download-artifact@v4
+              with:
+                  name: revless-dist
+                  path: dist
+            - name: Install SFTP client
+              if: steps.current.outputs.deploy == 'true'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y lftp
+            - name: Upload production build
+              if: steps.current.outputs.deploy == 'true'
+              env:
+                  OVH_SFTP_HOST: ${{ vars.OVH_SFTP_HOST }}
+                  OVH_SFTP_PORT: ${{ vars.OVH_SFTP_PORT }}
+                  OVH_SFTP_PATH: ${{ vars.OVH_SFTP_PATH }}
+                  OVH_SFTP_KNOWN_HOSTS: ${{ vars.OVH_SFTP_KNOWN_HOSTS }}
+                  OVH_SFTP_USER: ${{ secrets.OVH_SFTP_USER }}
+                  LFTP_PASSWORD: ${{ secrets.OVH_SFTP_PASSWORD }}
+              shell: bash
+              run: |
+                  : "${OVH_SFTP_HOST:?Missing OVH_SFTP_HOST}"
+                  : "${OVH_SFTP_PORT:?Missing OVH_SFTP_PORT}"
+                  : "${OVH_SFTP_PATH:?Missing OVH_SFTP_PATH}"
+                  : "${OVH_SFTP_KNOWN_HOSTS:?Missing OVH_SFTP_KNOWN_HOSTS}"
+                  : "${OVH_SFTP_USER:?Missing OVH_SFTP_USER}"
+                  : "${LFTP_PASSWORD:?Missing OVH_SFTP_PASSWORD}"
+                  test -f dist/index.html
+
+                  quote_lftp() {
+                      local value="$1"
+                      [[ "$value" != *[[:cntrl:]]* ]] || return 1
+                      value="${value//\\/\\\\}"
+                      value="${value//\"/\\\"}"
+                      printf '"%s"' "$value"
+                  }
+
+                  user=$(quote_lftp "$OVH_SFTP_USER")
+                  server=$(quote_lftp "sftp://$OVH_SFTP_HOST")
+                  port=$(quote_lftp "$OVH_SFTP_PORT")
+                  target=$(quote_lftp "$OVH_SFTP_PATH")
+
+                  known_hosts=$(mktemp)
+                  trap 'rm -f "$known_hosts"' EXIT
+                  printf '%s\n' "$OVH_SFTP_KNOWN_HOSTS" > "$known_hosts"
+
+                  lftp <<EOF
+                  set cmd:fail-exit yes
+                  set net:max-retries 2
+                  set sftp:auto-confirm no
+                  set sftp:connect-program "ssh -a -x -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$known_hosts -o GlobalKnownHostsFile=/dev/null"
+                  set xfer:use-temp-file yes
+                  open --env-password --user $user -p $port $server
+                  cd $target
+                  mirror --reverse --exclude '^index[.]html$' dist/ ./
+                  put dist/index.html -o index.html
+                  bye
+                  EOF
