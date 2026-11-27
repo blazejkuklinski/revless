@@ -3,45 +3,52 @@ import { emptyTrip } from "../parameters"
 import type { GpsFix } from "./useDrive"
 import { advanceManual, recordGpsFix, snapshot, type Trip, type TripState } from "../trip"
 
-export function useTrip(active: boolean, manual: boolean, speed: number, position: GpsFix | null) {
+export function useTrip(manual: boolean, speed: number, position: GpsFix | null) {
 	const [trip, setTrip] = useState<Trip>(emptyTrip)
-	const state = useRef<TripState>({ ...emptyTrip, startedAt: null, lastManualUpdate: 0, manualSpeed: 0, anchor: null, lastFixTime: 0, lastGpsSpeed: null })
+	const [initialTime] = useState(() => performance.now())
+	const state = useRef<TripState>({ ...emptyTrip, hasDistance: manual, hasSpeed: manual, startedAt: initialTime, lastManualUpdate: initialTime, manualSpeed: 0, anchor: null, lastFixTime: 0, lastGpsSpeed: null })
+
+	const reset = () => {
+		const now = performance.now()
+		state.current = {
+			...emptyTrip,
+			hasDistance: state.current.hasDistance,
+			hasSpeed: state.current.hasSpeed,
+			startedAt: now,
+			lastManualUpdate: now,
+			manualSpeed: manual ? Math.max(0, speed) : 0,
+			anchor: null,
+			lastFixTime: Date.now(),
+			lastGpsSpeed: null
+		}
+		setTrip(snapshot(state.current, now))
+	}
 
 	useEffect(() => {
-		const now = performance.now()
-		if (!active) {
-			if (state.current.startedAt !== null) {
-				if (manual) advanceManual(state.current, now)
-				const final = snapshot(state.current, now)
-				state.current.startedAt = null
-				state.current.elapsedMs = final.elapsedMs
-				setTrip(final)
-			}
-			return
-		}
-		state.current = { ...emptyTrip, hasDistance: manual, hasSpeed: manual, startedAt: now, lastManualUpdate: now, manualSpeed: 0, anchor: null, lastFixTime: 0, lastGpsSpeed: null }
-		setTrip(snapshot(state.current, now))
 		const interval = window.setInterval(() => {
 			const time = performance.now()
-			if (manual) advanceManual(state.current, time)
+			if (manual) {
+				advanceManual(state.current, time)
+				state.current.topSpeed = Math.max(state.current.topSpeed, state.current.manualSpeed)
+			}
 			setTrip(snapshot(state.current, time))
 		}, 1000)
 		return () => window.clearInterval(interval)
-	}, [active, manual])
+	}, [manual])
 
 	useEffect(() => {
-		if (!active || !manual || state.current.startedAt === null) return
+		if (!manual) return
 		const now = performance.now()
 		advanceManual(state.current, now)
 		state.current.manualSpeed = Math.max(0, speed)
 		state.current.topSpeed = Math.max(state.current.topSpeed, speed)
 		setTrip(snapshot(state.current, now))
-	}, [active, manual, speed])
+	}, [manual, speed])
 
 	useEffect(() => {
-		if (!active || manual || !position || state.current.startedAt === null) return
+		if (manual || !position) return
 		if (recordGpsFix(state.current, position)) setTrip(snapshot(state.current, performance.now()))
-	}, [active, manual, position])
+	}, [manual, position])
 
-	return trip
+	return { trip, reset }
 }

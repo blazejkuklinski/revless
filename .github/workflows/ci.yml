@@ -49,6 +49,7 @@ jobs:
                   if-no-files-found: error
 
     release:
+        name: Release
         if: github.event_name == 'push' && needs.build.outputs.release_tag != ''
         needs: build
         runs-on: ubuntu-latest

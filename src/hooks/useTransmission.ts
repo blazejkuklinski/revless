@@ -3,7 +3,7 @@ import { idleRpm } from "../parameters"
 import { advanceTransmission, createTransmission, createTransmissionState, recordTransmissionSpeed, type EngineTelemetry, type TransmissionSettings } from "../transmission"
 import type { GpsFix } from "./useDrive"
 
-export function useTransmission(active: boolean, manualSpeed: number | null, position: GpsFix | null, settings: TransmissionSettings) {
+export function useTransmission(manualSpeed: number | null, position: GpsFix | null, settings: TransmissionSettings) {
 	const { gears, maxSpeed, maxRpm, redZoneRpm, shiftPreset } = settings
 	const transmission = useMemo(
 		() => createTransmission({ gears, maxSpeed, maxRpm, redZoneRpm, shiftPreset }),
@@ -14,11 +14,6 @@ export function useTransmission(active: boolean, manualSpeed: number | null, pos
 	const [telemetry, setTelemetry] = useState<EngineTelemetry>({ gear: null, rpm: idleRpm })
 
 	useEffect(() => {
-		if (!active) {
-			setTelemetry({ gear: null, rpm: idleRpm })
-			return
-		}
-
 		const state = createTransmissionState(performance.now())
 		let previousFixTime = -Infinity
 		// A fixed update cadence keeps React and Web Audio work bounded on high-refresh displays.
@@ -38,7 +33,7 @@ export function useTransmission(active: boolean, manualSpeed: number | null, pos
 			setTelemetry((current) => current.gear === next.gear && current.rpm === next.rpm ? current : next)
 		}, 1000 / 30)
 		return () => window.clearInterval(timer)
-	}, [active])
+	}, [])
 
 	return telemetry
 }

@@ -9,7 +9,7 @@ export type Trip = {
 }
 
 type Fix = { latitude: number; longitude: number; accuracy: number; timestamp: number }
-export type TripState = Trip & { startedAt: number | null; lastManualUpdate: number; manualSpeed: number; anchor: Fix | null; lastFixTime: number; lastGpsSpeed: number | null }
+export type TripState = Trip & { startedAt: number; lastManualUpdate: number; manualSpeed: number; anchor: Fix | null; lastFixTime: number; lastGpsSpeed: number | null }
 
 function distanceBetween(a: Fix, b: Fix) {
 	const radians = Math.PI / 180
@@ -22,7 +22,7 @@ function distanceBetween(a: Fix, b: Fix) {
 export function snapshot(state: TripState, now: number): Trip {
 	return {
 		distanceKm: state.distanceKm,
-		elapsedMs: state.startedAt === null ? state.elapsedMs : Math.max(0, now - state.startedAt),
+		elapsedMs: Math.max(0, now - state.startedAt),
 		topSpeed: state.topSpeed,
 		hasDistance: state.hasDistance,
 		hasSpeed: state.hasSpeed

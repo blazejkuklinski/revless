@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { earliestGpsTimestamp } from "../parameters"
 
 export type GpsStatus = "idle" | "searching" | "connected" | "error"
+
 export type GpsFix = Pick<GeolocationPosition, "coords" | "timestamp"> & { usesReceiptTime: boolean }
 
 function normalizeFix(position: GeolocationPosition, receivedAt: number): GpsFix {
@@ -16,10 +17,8 @@ export function useDrive() {
 	const [status, setStatus] = useState<GpsStatus>("idle")
 	const [message, setMessage] = useState("Ready when you are")
 	const [position, setPosition] = useState<GpsFix | null>(null)
-	const [driving, setDriving] = useState(false)
 	const stopWatching = useRef<(() => void) | null>(null)
 	const requestFreshFix = useRef<(() => void) | null>(null)
-	const onDriveError = useRef<(() => void) | null>(null)
 	const lastError = useRef("")
 
 	const watchLocation = useCallback(() => {
@@ -38,20 +37,15 @@ export function useDrive() {
 			if (retryId !== null) window.clearTimeout(retryId)
 		}
 		stopWatching.current = cleanup
-		const reportError = (message: string, endDrive: boolean) => {
+		const reportError = (message: string) => {
 			setStatus("error")
 			setMessage(message)
 			if (lastError.current !== message) toast.danger(message, { timeout: 6000 })
 			lastError.current = message
-			if (endDrive) {
-				setDriving(false)
-				onDriveError.current?.()
-				onDriveError.current = null
-			}
 		}
 		if (!navigator.geolocation) {
 			stopWatching.current = null
-			reportError("Geolocation is not supported on this device", true)
+			reportError("Geolocation is not supported on this device")
 			return
 		}
 		setStatus("searching")
@@ -74,7 +68,7 @@ export function useDrive() {
 		}
 		const onError = (error: GeolocationPositionError) => {
 			if (stopped) return
-			reportError(error.code === 1 ? "Location permission denied" : "GPS signal unavailable", error.code === 1)
+			reportError(error.code === 1 ? "Location permission denied" : "GPS signal unavailable")
 			if (error.code === 1) {
 				cleanup()
 				stopWatching.current = null
@@ -84,11 +78,15 @@ export function useDrive() {
 				retryId = window.setTimeout(() => {
 					retryId = null
 					const previousFixCount = fixCount
-					navigator.geolocation.getCurrentPosition(onPosition, (retryError) => {
-						if (stopped || previousFixCount !== fixCount) return
-						retryPending = false
-						onError(retryError)
-					}, { enableHighAccuracy: false, maximumAge: 0, timeout: 5000 })
+					navigator.geolocation.getCurrentPosition(
+						onPosition,
+						(retryError) => {
+							if (stopped || previousFixCount !== fixCount) return
+							retryPending = false
+							onError(retryError)
+						},
+						{ enableHighAccuracy: false, maximumAge: 0, timeout: 5000 }
+					)
 				}, 1000)
 			}
 		}
@@ -100,7 +98,9 @@ export function useDrive() {
 					refreshPending = false
 					onPosition(fix)
 				},
-				() => { refreshPending = false },
+				() => {
+					refreshPending = false
+				},
 				{ enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
 			)
 		}
@@ -115,17 +115,7 @@ export function useDrive() {
 		}
 	}, [watchLocation])
 
-	const start = (onError: () => void) => {
-		onDriveError.current = onError
-		setDriving(true)
-		if (!stopWatching.current || status === "error") watchLocation()
-	}
-	const stop = () => {
-		setDriving(false)
-		onDriveError.current = null
-	}
-
 	const refreshLocation = useCallback(() => requestFreshFix.current?.(), [])
 
-	return { speed, status, message, position, driving, start, stop, refreshLocation }
+	return { speed, status, message, position, refreshLocation }
 }

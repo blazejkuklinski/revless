@@ -66,14 +66,16 @@ export function isEngineSound(value: unknown): value is EngineSound {
 	return value === "off" || (typeof value === "string" && Object.hasOwn(engineSamples, value))
 }
 
-export function useEngineSound(rpm: number, maxRpm: number, volume: number, sound: EngineSound) {
+const maxStartupSpeedKmh = 5
+
+export function useEngineSound(rpm: number, maxRpm: number, volume: number, sound: EngineSound, speed: number) {
 	const engine = useRef<Engine | null>(null)
 	const generation = useRef(0)
-	const currentValues = useRef({ rpm, maxRpm, volume, sound })
-	currentValues.current = { rpm, maxRpm, volume, sound }
+	const currentValues = useRef({ rpm, maxRpm, volume, sound, speed })
+	currentValues.current = { rpm, maxRpm, volume, sound, speed }
 	const [loading, setLoading] = useState(false)
 
-	const start = async () => {
+	const start = async (onIgnition: () => void) => {
 		const token = ++generation.current
 		setLoading(true)
 		let context: AudioContext | null = null
@@ -90,7 +92,7 @@ export function useEngineSound(rpm: number, maxRpm: number, volume: number, soun
 			}
 
 			const [startupBuffer, recordings] = await Promise.all([
-				loadSample(engineStartupSample),
+				speed <= maxStartupSpeedKmh ? loadSample(engineStartupSample) : null,
 				Promise.all(
 					engineSounds.map(async (name) => ({
 						name,
@@ -145,18 +147,21 @@ export function useEngineSound(rpm: number, maxRpm: number, volume: number, soun
 			updateEngine(engine.current, currentValues.current.rpm, currentValues.current.maxRpm, currentValues.current.volume, currentValues.current.sound)
 
 			const startTime = audioContext.currentTime
-			const startupEnd = startTime + startupBuffer.duration
-			const overlap = Math.min(startupCrossfadeSeconds, startupBuffer.duration)
-			const fadeStart = startupEnd - overlap
+			let loopStart = startTime
+			if (startupBuffer && currentValues.current.speed <= maxStartupSpeedKmh) {
+				const startupEnd = startTime + startupBuffer.duration
+				const overlap = Math.min(startupCrossfadeSeconds, startupBuffer.duration)
+				loopStart = startupEnd - overlap
 
-			startupFade.gain.setValueAtTime(1, fadeStart)
-			startupFade.gain.linearRampToValueAtTime(0, startupEnd)
-			loopFade.gain.setValueAtTime(0, startTime)
-			loopFade.gain.setValueAtTime(0, fadeStart)
-			loopFade.gain.linearRampToValueAtTime(1, startupEnd)
-
-			startupSource.start(startTime)
-			for (const { source } of voices) source.start(fadeStart)
+				startupFade.gain.setValueAtTime(1, loopStart)
+				startupFade.gain.linearRampToValueAtTime(0, startupEnd)
+				loopFade.gain.setValueAtTime(0, startTime)
+				loopFade.gain.setValueAtTime(0, loopStart)
+				loopFade.gain.linearRampToValueAtTime(1, startupEnd)
+				startupSource.start(startTime)
+				if (sound !== "off" && volume > 0) onIgnition()
+			}
+			for (const { source } of voices) source.start(loopStart)
 			return true
 		} catch {
 			if (context && context.state !== "closed") {

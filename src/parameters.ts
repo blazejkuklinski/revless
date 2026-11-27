@@ -230,9 +230,6 @@ export const startupPhaseMs = 1000
 export const mapZoom = 15
 export const mapZoomRange = { min: -2, max: 22 }
 
-// Compass labels at 45-degree intervals clockwise from north.
-export const compassDirections = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const
-
 // OpenFreeMap style URLs for light and dark themes.
 export const mapStyle = {
 	light: "https://tiles.openfreemap.org/styles/positron",
@@ -261,3 +258,5 @@ export const storageKey = "engine-drive-settings"
 
 // Local storage key for the last and best times for each performance test.
 export const performanceResultsStorageKey = "engine-drive-performance-results"
+
+export const weatherUpdateIntervalMinutes = 20
