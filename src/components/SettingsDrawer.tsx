@@ -271,13 +271,13 @@ export function SettingsDrawer(props: SettingsDrawer) {
 									<Card.Content className="overflow-y-shadow">
 										<Fieldset>
 											<Field>
-												<Field.Label label="Speed units" description="Display and controls" />
+												<Field.Label label="Measurement units" description="Speed, distance, and weather" />
 												<Field.Control>
-													<ButtonGroup aria-label="Speed units" fullWidth>
+													<ButtonGroup aria-label="Measurement units" fullWidth>
 														{(
 															[
-																["metric", "km/h"],
-																["imperial", "mph"]
+																["metric", "Metric"],
+																["imperial", "Imperial"]
 															] as const
 														).map(([value, label]) => (
 															<Button key={value} variant={speedUnit === value ? "secondary" : "tertiary"} onPress={() => setSpeedUnit(value)} aria-pressed={speedUnit === value}>

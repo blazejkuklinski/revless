@@ -38,7 +38,7 @@ export function AboutModal(props: AboutModalProps) {
 									<li>To use your phone, pair it with your car over Bluetooth, select Bluetooth audio as the car's media source, and open Revless in your phone's browser.</li>
 								</ul>
 								<p>
-									While parked, tap <strong>Start driving</strong> and allow location access when prompted. Revless uses your GPS speed to play engine sounds through the selected audio output as you drive.
+									Allow location access when prompted to track GPS speed and trip stats. Tap <strong>Ignite</strong> to hear engine sounds through your selected audio output as you drive.
 								</p>
 							</Surface>
 

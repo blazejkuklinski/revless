@@ -11,8 +11,17 @@ import { useSettingsStore } from "../stores/settingsStore"
 // Vite must not transform MapLibre's already bundled worker as an app module.
 maplibregl.setWorkerUrl(URL.createObjectURL(new Blob([workerSource], { type: "text/javascript" })))
 
-type MapLabels = { showStreetNames: boolean; showPointsOfInterest: boolean }
-type MiniMap = MapLabels & { position: GpsFix | null; status: GpsStatus; dark: boolean; onBearingChange: (bearing: number) => void }
+type MapLabels = {
+	showStreetNames: boolean
+	showPointsOfInterest: boolean
+}
+
+type MiniMap = {
+	position: GpsFix | null
+	status: GpsStatus
+	dark: boolean
+	onBearingChange: (bearing: number) => void
+} & MapLabels
 
 function addPointsOfInterestLayer(map: maplibregl.Map, dark: boolean) {
 	// Positron omits POI labels. Use the same OpenMapTiles layer in both themes.

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState, type MouseEvent } from "react"
 
-export function useDrivingControls(active: boolean) {
+export function useDrivingControls() {
 	const [manualSpeedOpen, setManualSpeedOpen] = useState(false)
 	const [settingsOpen, setSettingsOpen] = useState(false)
 	const [gpsOpen, setGpsOpen] = useState(false)
 	const [performanceOpen, setPerformanceOpen] = useState(false)
 	const [aboutOpen, setAboutOpen] = useState(false)
-	const [headerState, setHeaderState] = useState<"hidden" | "revealed" | "temporary">("hidden")
+	const [headerState, setHeaderState] = useState<"hidden" | "revealed" | "temporary">("temporary")
 
 	const overlayOpen = settingsOpen || gpsOpen || performanceOpen || manualSpeedOpen || aboutOpen
 
@@ -20,27 +20,26 @@ export function useDrivingControls(active: boolean) {
 	}
 
 	const handleScreenClick = ({ target, currentTarget }: MouseEvent<HTMLDivElement>) => {
-		if (!active || overlayOpen) return
+		if (overlayOpen) return
 		if (!(target instanceof Element) || !currentTarget.contains(target)) return
 		if (target.closest("#driving-header, a, button, input, select, textarea, label, [contenteditable], [role='button']")) return
 		toggleHeader()
 	}
 
 	useEffect(() => {
-		if (!active || overlayOpen || headerState !== "temporary") return
+		if (overlayOpen || headerState !== "temporary") return
 		const timer = window.setTimeout(() => setHeaderState("hidden"), 5000)
 		return () => window.clearTimeout(timer)
-	}, [active, overlayOpen, headerState])
+	}, [overlayOpen, headerState])
 
 	return {
-		headerVisible: !active || headerState !== "hidden",
+		headerVisible: headerState !== "hidden",
 		settingsOpen,
 		gpsOpen,
 		performanceOpen,
 		aboutOpen,
 		manualSpeedOpen,
 
-		hideHeader,
 		toggleHeader,
 		handleScreenClick,
 

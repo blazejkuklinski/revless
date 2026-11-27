@@ -8,11 +8,10 @@ function hasAccurateFix({ accuracy }: GeolocationCoordinates) {
 	return Number.isFinite(accuracy) && accuracy >= 0 && accuracy <= maxGpsAccuracy
 }
 
-export function usePerformanceRun(active: boolean, manual: boolean, speed: number, position: GpsFix | null, onFinish: () => void) {
+export function usePerformanceRun(manual: boolean, speed: number, position: GpsFix | null, onFinish: () => void) {
 	const [run, setRun] = useState<PerformanceRun | null>(null)
 	const measuring = run?.phase === "armed" || run?.phase === "running"
 	const armBlockReason = (now: number) => {
-		if (!active) return "Start a drive before starting a test."
 		if (speed > startSpeedKmh) return "Stop the vehicle before starting a test."
 		if (!manual && (!position || now - position.timestamp > maxStandingFixAgeMs)) return "Waiting for a fresh GPS fix."
 		if (!manual && position && !hasAccurateFix(position.coords)) return "Waiting for a more accurate GPS fix."
@@ -32,7 +31,6 @@ export function usePerformanceRun(active: boolean, manual: boolean, speed: numbe
 			const now = Date.now()
 			setRun((current) => {
 				if (!current || (current.phase !== "armed" && current.phase !== "running")) return current
-				if (!active) return invalidatePerformanceRun(current, "The drive ended before the run finished.")
 				if (manual) return recordPerformanceSample(current, now, speed)
 				if (position && position.timestamp > current.lastTime) {
 					const gpsSpeed = position.coords.speed
@@ -50,7 +48,7 @@ export function usePerformanceRun(active: boolean, manual: boolean, speed: numbe
 		updateRun()
 		const timer = window.setInterval(updateRun, 250)
 		return () => window.clearInterval(timer)
-	}, [active, manual, measuring, position, speed])
+	}, [manual, measuring, position, speed])
 
 	useEffect(() => {
 		if (run?.phase === "complete") usePerformanceResultsStore.getState().recordResult(run)

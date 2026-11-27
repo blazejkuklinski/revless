@@ -43,23 +43,23 @@ function accentForeground(color: string) {
 function App() {
 	const rightHandDrive = usesRightHandDrive()
 	const drawerPlacement = rightHandDrive ? "right" : "left"
-	const [startupRpm, setStartupRpm] = useState<number | null>(null)
 	const [manualSpeed, setManualSpeed] = useState(0)
-	const [manualActive, setManualActive] = useState(false)
+	const [soundActive, setSoundActive] = useState(false)
+	const [ignitionStartedAt, setIgnitionStartedAt] = useState<number | null>(null)
+	const [ignitionRpm, setIgnitionRpm] = useState<number | null>(null)
 	const settings = useSettingsStore((state) => state.settings)
 	const [darkSystem, setDarkSystem] = useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
 	const dark = settings.theme === "system" ? darkSystem : settings.theme === "dark"
 	const drive = useDrive()
-	const active = isLocalhost ? manualActive : drive.driving
-	const controls = useDrivingControls(active)
+	const controls = useDrivingControls()
 	const { headerVisible } = controls
-	const speed = isLocalhost ? Math.min(manualSpeed, settings.maxSpeed) : active ? drive.speed : 0
-	const { gear, rpm: drivingRpm } = useTransmission(active, isLocalhost ? speed : null, drive.position, settings)
-	const rpm = active ? Math.min(settings.maxRpm, (gear === null ? startupRpm : null) ?? drivingRpm) : 0
-	const sound = useEngineSound(rpm, settings.maxRpm, settings.volume, settings.sound)
-	const trip = useTrip(active, isLocalhost, speed, drive.position)
-	const performanceRun = usePerformanceRun(active, isLocalhost, speed, drive.position, controls.openPerformance)
-	const refreshPerformanceGps = !isLocalhost && active && (controls.performanceOpen || performanceRun.run?.phase === "armed")
+	const speed = isLocalhost ? Math.min(manualSpeed, settings.maxSpeed) : drive.speed
+	const { gear, rpm: drivingRpm } = useTransmission(isLocalhost ? speed : null, drive.position, settings)
+	const rpm = Math.min(settings.maxRpm, ignitionRpm ?? drivingRpm)
+	const sound = useEngineSound(rpm, settings.maxRpm, settings.volume, settings.sound, speed)
+	const { trip, reset: resetTrip } = useTrip(isLocalhost, speed, drive.position)
+	const performanceRun = usePerformanceRun(isLocalhost, speed, drive.position, controls.openPerformance)
+	const refreshPerformanceGps = !isLocalhost && (controls.performanceOpen || performanceRun.run?.phase === "armed")
 	const { refreshLocation } = drive
 
 	const armPerformance = (mode: PerformanceMode) => {
@@ -68,22 +68,38 @@ function App() {
 		return true
 	}
 
-	const toggleDrive = async () => {
-		if (active) {
-			if (isLocalhost) {
-				setManualActive(false)
-				setManualSpeed(0)
-			}
-			drive.stop()
+	const toggleSound = async () => {
+		if (soundActive) {
 			sound.stop()
-			return
+			setSoundActive(false)
+			setIgnitionStartedAt(null)
+			setIgnitionRpm(null)
+		} else if (await sound.start(() => {
+			setIgnitionStartedAt(performance.now())
+			setIgnitionRpm(0)
+		})) {
+			setSoundActive(true)
 		}
-		await sound.start()
-		controls.hideHeader()
-		setStartupRpm(0)
-		if (isLocalhost) setManualActive(true)
-		drive.start(isLocalhost ? () => {} : sound.stop)
 	}
+
+	useEffect(() => {
+		const startedAt = ignitionStartedAt
+		if (startedAt === null) return
+
+		const updateIgnitionRpm = (now: number) => {
+			const phase = Math.max(0, now - startedAt) / startupPhaseMs
+			if (phase >= 2) {
+				setIgnitionStartedAt(null)
+				setIgnitionRpm(null)
+				return
+			}
+			setIgnitionRpm(phase < 1 ? startupPeakRpm * phase : startupPeakRpm + (idleRpm - startupPeakRpm) * (phase - 1))
+			frame = requestAnimationFrame(updateIgnitionRpm)
+		}
+
+		let frame = requestAnimationFrame(updateIgnitionRpm)
+		return () => cancelAnimationFrame(frame)
+	}, [ignitionStartedAt])
 
 	useEffect(() => {
 		setManualSpeed((current) => Math.min(current, settings.maxSpeed))
@@ -95,30 +111,6 @@ function App() {
 		const timer = window.setInterval(refreshLocation, performanceGpsRefreshMs)
 		return () => window.clearInterval(timer)
 	}, [refreshLocation, refreshPerformanceGps])
-
-	useEffect(() => {
-		if (!active) {
-			setStartupRpm(null)
-			return
-		}
-
-		const startedAt = performance.now()
-		let frame = requestAnimationFrame(updateStartupRpm)
-
-		function updateStartupRpm(now: number) {
-			const elapsed = now - startedAt
-			if (elapsed >= startupPhaseMs * 2) {
-				setStartupRpm(null)
-				return
-			}
-
-			const phase = elapsed / startupPhaseMs
-			setStartupRpm(phase < 1 ? startupPeakRpm * phase : startupPeakRpm + (idleRpm - startupPeakRpm) * (phase - 1))
-			frame = requestAnimationFrame(updateStartupRpm)
-		}
-
-		return () => cancelAnimationFrame(frame)
-	}, [active])
 
 	useEffect(() => {
 		const media = window.matchMedia("(prefers-color-scheme: dark)")
@@ -162,8 +154,8 @@ function App() {
 					<div className={clsx("transition-transform duration-300 ease-in-out motion-reduce:transition-none", !headerVisible && "-translate-y-full")}>
 						<Header
 							rightHandDrive={rightHandDrive}
-							active={active}
-							onToggle={toggleDrive}
+							active={soundActive}
+							onToggle={toggleSound}
 							onOpenSettings={controls.openSettings}
 							onOpenPerformance={controls.openPerformance}
 							onOpenGps={controls.openGps}
@@ -178,19 +170,17 @@ function App() {
 
 			<main className="mx-auto flex min-h-0 w-full max-w-350 flex-1 flex-col p-4">
 				{/* Navigation control for screen reader only */}
-				{active && (
-					<button type="button" className="sr-only focus:not-sr-only self-start" aria-controls="driving-header" aria-expanded={headerVisible} onClick={controls.toggleHeader}>
-						{headerVisible ? "Hide driving controls" : "Show driving controls"}
-					</button>
-				)}
+				<button type="button" className="sr-only focus:not-sr-only self-start" aria-controls="driving-header" aria-expanded={headerVisible} onClick={controls.toggleHeader}>
+					{headerVisible ? "Hide driving controls" : "Show driving controls"}
+				</button>
 
 				<div className="mx-auto flex min-h-0 w-full flex-1 flex-col gap-2">
 					<SpeedDisplay
 						speed={speed}
 						unit={settings.speedUnit}
-						gear={active ? gear : null}
+						gear={gear}
 						rpm={rpm}
-						idling={active && startupRpm === null && gear === null && rpm === idleRpm}
+						idling={ignitionRpm === null && gear === null && rpm === idleRpm}
 						maxRpm={settings.maxRpm}
 						redZoneRpm={settings.redZoneRpm}
 						position={drive.position}
@@ -199,6 +189,7 @@ function App() {
 						showStreetNames={settings.showStreetNames}
 						showPointsOfInterest={settings.showPointsOfInterest}
 						trip={trip}
+						onResetTrip={resetTrip}
 					/>
 				</div>
 			</main>

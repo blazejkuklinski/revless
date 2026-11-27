@@ -55,36 +55,35 @@ export default function PerformanceReportModal({ result, mode, title, onClose }:
 			<Modal.Container placement="center">
 				<Modal.Dialog className="w-full max-w-250">
 					<Modal.Header className="flex flex-row items-center justify-between gap-4">
-						<Modal.Heading className="title">Performance report</Modal.Heading>
+						<Modal.Heading className="title">{testLabel}</Modal.Heading>
 						<Button isIconOnly variant="ghost" onPress={onClose} aria-label="Close performance report">
 							<X size={20} />
 						</Button>
 					</Modal.Header>
-					<Modal.Body>
+					<Modal.Body className="pr-4 overflow-y-shadow after:-bottom-0.75!">
 						<div className="grid lg:grid-cols-[auto_minmax(0,1fr)] gap-4">
-							<Surface aria-label="Run summary" variant="secondary" className="rounded-2xl p-6 space-y-4">
-								<div className="space-y-1">
-									<h4 className="text-muted uppercase">{title}</h4>
-									<h3 className="text-sm font-semibold tracking-tight">{testLabel}</h3>
-								</div>
-
-								<div className="space-y-2">
-									<p className="font-display text-7xl leading-none font-semibold tracking-tighter tabular-nums sm:text-6xl">
-										{(result.elapsedMs / 1000).toFixed(2)} <span className="text-xl font-medium tracking-normal">sec</span>
-									</p>
-									{result.manual !== undefined && <div className="text-muted text-sm">{result.manual ? "Simulated run" : "GPS estimate"}</div>}
-								</div>
-
-								<Separator />
-
-								<dl className="grid grid-cols-3 gap-x-3 lg:grid-cols-1 lg:gap-y-4">
-									{summary.map(({ label, value }) => (
-										<div key={label} className="space-y-1">
-											<dt className="text-muted">{label}</dt>
-											<dd className="text-sm font-semibold tabular-nums">{value}</dd>
+							<Surface aria-label="Run summary" variant="secondary" className="rounded-2xl p-4 lg:p-6 space-y-6">
+								<h3 className="text-muted uppercase">{title}</h3>
+								<div className="flex lg:flex-col gap-x-12 gap-y-6 items-center lg:items-start">
+									<div className="space-y-2">
+										<div className="font-display text-3xl lg:text-7xl leading-none font-semibold tracking-tighter tabular-nums">
+											{(result.elapsedMs / 1000).toFixed(2)} <span className="text-xl font-medium tracking-normal">sec</span>
 										</div>
-									))}
-								</dl>
+										{result.manual !== undefined && <div className="text-muted text-sm">{result.manual ? "Simulated run" : "GPS estimate"}</div>}
+									</div>
+
+									<Separator orientation="horizontal" className="hidden lg:block" />
+									<Separator orientation="vertical" className="block lg:hidden" />
+
+									<dl className="flex lg:flex-col gap-x-12 lg:gap-y-4">
+										{summary.map(({ label, value }) => (
+											<div key={label} className="space-y-1">
+												<dt className="text-muted">{label}</dt>
+												<dd className="font-semibold tabular-nums">{value}</dd>
+											</div>
+										))}
+									</dl>
+								</div>
 							</Surface>
 							<div className="min-w-0">
 								{data.length ? (

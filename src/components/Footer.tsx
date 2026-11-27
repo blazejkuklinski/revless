@@ -13,6 +13,10 @@ export function Footer() {
 					&copy; OpenMapTiles
 				</a>
 				<Circle size={5} className="fill-muted" />
+				<a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
+					Weather data by Open-Meteo
+				</a>
+				<Circle size={5} className="fill-muted" />
 				<a href="https://zerogravity.solutions" target="_blank" rel="noreferrer" className="font-bold">
 					&copy; ZeroGravity
 				</a>

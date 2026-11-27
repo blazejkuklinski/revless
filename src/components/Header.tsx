@@ -52,9 +52,9 @@ export function Header(props: Header) {
 						</Dropdown.Menu>
 					</Dropdown.Popover>
 				</Dropdown>
-				<Button variant={props.active ? "secondary" : "primary"} onPress={props.onToggle} isDisabled={props.loading} className="sm:w-50">
+				<Button variant={props.active ? "secondary" : "primary"} onPress={props.onToggle} isDisabled={props.loading} aria-label={props.loading ? "Loading engine sound" : props.active ? "Silence engine sound" : "Ignite engine sound"} className="sm:w-50">
 					<Power size={20} />
-					{props.loading ? "Loading sound..." : props.active ? "End drive" : "Start driving"}
+					{props.loading ? "Loading sound..." : props.active ? "Silence" : "Ignite"}
 				</Button>
 			</ButtonGroup>
 			<div className="flex items-center gap-3 font-display text-lg font-extrabold tracking-tight">

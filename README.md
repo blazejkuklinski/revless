@@ -20,7 +20,7 @@ Choose a **0–100 km/h (about 62 mph)** acceleration test or a **quarter-mile**
 ## Use the app
 
 1. Open [revless.app](https://revless.app) in a browser with location access and audio playback. If using a phone, pair it with your car and select Bluetooth audio as the car's media source.
-2. While parked, grant location permission when prompted and tap **Start driving** to enable engine audio.
+2. Grant location permission when prompted to track GPS speed and trip stats. Tap **Ignite** to enable engine audio.
 
 The browser needs to report GPS speed for the dashboard to respond to movement. Some devices provide coordinates without a speed reading.
 
